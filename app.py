@@ -5,13 +5,13 @@ from langchain.vectorstores.faiss import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import CohereEmbeddings
 from langchain.chains import RetrievalQA
+import os
 
 
 def fetch_github_repo_contents(owner, repo, extensions, branch, path=''):
     url = f'https://api.github.com/repos/{owner}/{repo}/contents/{path}'
     params = {'ref': branch}
     response = requests.get(url, params=params)
-    print(response.json())
     if response.status_code != 200:
         print(f"Failed to fetch repository contents. Status code: {response.status_code}")
         return []
@@ -20,7 +20,8 @@ def fetch_github_repo_contents(owner, repo, extensions, branch, path=''):
     files_with_extensions = []
 
     for content in contents:
-        if content['type'] == 'file' and content['name'].split('.')[-1] in extensions:
+        if content['type'] == 'file' and os.path.splitext(content['name'])[1] in extensions:
+            print(content['name'])
             files_with_extensions.append(content['download_url'])
         elif content['type'] == 'dir':
             files_with_extensions.extend(fetch_github_repo_contents(owner, repo, extensions, branch, content['path']))
