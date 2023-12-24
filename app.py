@@ -72,7 +72,7 @@ def main():
     extensions = st.text_input(
         "File Extensions (seperated by comma ex: .py,.md,.js)").split(',')
     user_question = st.text_input(
-        "User Question", "Write a python code to find the sum of two numbers.")
+        "User Question")
     prompt = f"You are a code generation bot.\n\
              You are given a user question.\n \
              Generate code for the user question.\n \
@@ -86,18 +86,19 @@ def main():
              If you dont know how to generate code, just tell the user it is currently not in your capability to write this code.\n \
              If no langauge is specified, assume it is python.\n \
              The user question is: {user_question}\n"
-    llm = Together(
-        model="Phind/Phind-CodeLlama-34B-v2",
-        temperature=0.8,
-        max_tokens=512,
-        top_k=1,
-        together_api_key=st.secrets["TOGETHER_API_KEY"]
-    )
-    text = get_text(owner, repo, extensions, branch)
-    chunks = get_chunks(text)
-    vector_store = get_vector_store(chunks)
+
     if st.button("Generate Code"):
         with st.spinner("Generating Code..."):
+            llm = Together(
+                model="Phind/Phind-CodeLlama-34B-v2",
+                temperature=0.8,
+                max_tokens=512,
+                top_k=1,
+                together_api_key=st.secrets["TOGETHER_API_KEY"]
+            )
+            text = get_text(owner, repo, extensions, branch)
+            chunks = get_chunks(text)
+            vector_store = get_vector_store(chunks)
             chain = RetrievalQA.from_chain_type(
                 llm=llm,
                 retriever=vector_store.as_retriever(),
@@ -106,6 +107,7 @@ def main():
             )
             answer = chain.run(prompt)
             st.markdown(answer)
+
 
 if __name__ == "__main__":
     main()
