@@ -7,28 +7,31 @@ from langchain.embeddings import CohereEmbeddings
 from langchain.chains import RetrievalQA
 
 
-def fetch_github_repo_contents(owner, repo, extensions, branch):
-    url = f'https://api.github.com/repos/{owner}/{repo}/contents'
+def fetch_github_repo_contents(owner, repo, extensions, branch, path=''):
+    url = f'https://api.github.com/repos/{owner}/{repo}/contents/{path}'
     params = {'ref': branch}
     response = requests.get(url, params=params)
+    print(response.json())
+    if response.status_code != 200:
+        print(f"Failed to fetch repository contents. Status code: {response.status_code}")
+        return []
 
-    if response.status_code == 200:
-        contents = response.json()
-        files_with_extensions = [
-            file['download_url'] for file in contents
-            if file['type'] == 'file' and any(file['name'].endswith(ext) for ext in extensions)
-        ]
-        return files_with_extensions
-    else:
-        print(
-            f"Failed to fetch repository contents. Status code: {response.status_code}")
-        return None
+    contents = response.json()
+    files_with_extensions = []
+
+    for content in contents:
+        if content['type'] == 'file' and content['name'].split('.')[-1] in extensions:
+            files_with_extensions.append(content['download_url'])
+        elif content['type'] == 'dir':
+            files_with_extensions.extend(fetch_github_repo_contents(owner, repo, extensions, branch, content['path']))
+
+    return files_with_extensions
 
 
 def get_text(owner, repo, extensions, branch):
     print(
         f"Fetching files with extensions {extensions} from {owner}/{repo}...")
-    files_to_read = fetch_github_repo_contents(owner, repo, extensions, branch)
+    files_to_read = fetch_github_repo_contents(owner, repo, extensions, branch, '')
     print(files_to_read)
     all_text = ""
     if files_to_read:
