@@ -1,4 +1,4 @@
-# Code Wizard AI
+# Code Wizard AI 🧙
 
 ## Project Description
 Code Wizard is a groundbreaking code generation tool empowered by advanced AI to automatically generate and enhance code based on best practices found in your GitHub repository. Whether you're a developer looking to streamline code creation or seeking intelligent solutions for code-related queries, Code Wizard is your coding companion, providing context-aware responses and code generation aligned with your project's standards.
@@ -41,9 +41,14 @@ In a collaborative coding environment, Code Wizard ensures consistency by genera
 - **GitHub API**: Code Wizard leverages the GitHub API to access and analyze repository data.
 - **Generative AI**: The project incorporates advanced generative AI techniques for code generation and refactoring.
 - **Python**: The project is primarily developed in Python.
+- **Langchain**: Langchain is used for natural language processing (NLP) tasks, including text extraction and understanding.
+- **Streamlit**: Streamlit is the framework used for creating a user-friendly web interface for the chatbot.
+- **FAISS**: Used as the vector store to provide context to the LLMs. Free, Open source and Fast.
+- **Cohere Embeddings**: Cohere Embeddings are used for creating embeddings in the FAISS vector database.
+- **Together AI**: Together AI is used for taking the Phind/Phind-CodeLlama-34B-v2 code model from HuggingFace Hub.
 
 ## Deployed Link
-[Live](https://sonic-sum.streamlit.app/)
+[Live](https://code-wizard-sg.streamlit.app/)
 
 <!-- Getting Started -->
 ## Getting Started
@@ -59,7 +64,7 @@ Ensure you have the following prerequisites installed on your machine:
 1. **Clone the Repository**:
     ```bash
 
-    git clone https://github.com/YourUsername/Code-Wizard.git
+    git clone https://github.com/ShashankGupta10/Code-Wizard.git
     cd Code-Wizard
 
 2. **Install Dependencies**:
@@ -81,6 +86,7 @@ Ensure you have the following prerequisites installed on your machine:
 
 ## Demo
 
+https://github.com/ShashankGupta10/Code-Wizard/assets/117008526/b7dccaf0-a6c2-4888-9114-424f7e982143
 
 ## Author
 Made with ❤️ by Shashank Gupta
