@@ -1,0 +1,5 @@
+langchain
+streamlit
+faiss-cpu
+cohere
+requests
