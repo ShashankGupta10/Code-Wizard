@@ -64,7 +64,7 @@ Ensure you have the following prerequisites installed on your machine:
 1. **Clone the Repository**:
     ```bash
 
-    git clone https://github.com/YourUsername/Code-Wizard.git
+    git clone https://github.com/ShashankGupta10/Code-Wizard.git
     cd Code-Wizard
 
 2. **Install Dependencies**:
