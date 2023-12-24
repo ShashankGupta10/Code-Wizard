@@ -41,6 +41,11 @@ In a collaborative coding environment, Code Wizard ensures consistency by genera
 - **GitHub API**: Code Wizard leverages the GitHub API to access and analyze repository data.
 - **Generative AI**: The project incorporates advanced generative AI techniques for code generation and refactoring.
 - **Python**: The project is primarily developed in Python.
+- **Langchain**: Langchain is used for natural language processing (NLP) tasks, including text extraction and understanding.
+- **Streamlit**: Streamlit is the framework used for creating a user-friendly web interface for the chatbot.
+- **FAISS**: Used as the vector store to provide context to the LLMs. Free, Open source and Fast.
+- **Cohere Embeddings**: Cohere Embeddings are used for creating embeddings in the FAISS vector database.
+- **Together AI**: Together AI is used for taking the Phind/Phind-CodeLlama-34B-v2 code model from HuggingFace Hub.
 
 ## Deployed Link
 [Live](https://code-wizard-sg.streamlit.app/)
