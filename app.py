@@ -88,6 +88,7 @@ def get_vector_store(chunks):
 def main():
     st.title("Code Wizard 🧙")
     st.subheader("Generate code according to your coding conventions")
+    st.info("You may get an API rate limit error if you use a large repository due to the Github API rate limit. Please try again later in some time and use a smaller repository.")
     owner = st.text_input("GitHub Repo Owner")
     repo = st.text_input("GitHub Repo Name")
     branch = st.text_input("GitHub Repo Branch")
