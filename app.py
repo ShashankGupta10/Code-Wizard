@@ -6,38 +6,56 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import CohereEmbeddings
 from langchain.chains import RetrievalQA
 import os
+import time
 
 
 def fetch_github_repo_contents(owner, repo, extensions, branch, path=''):
-    url = f'https://api.github.com/repos/{owner}/{repo}/contents/{path}'
-    params = {'ref': branch}
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        print(f"Failed to fetch repository contents. Status code: {response.status_code}")
+    try:
+        url = f'https://api.github.com/repos/{owner}/{repo}/contents/{path}'
+        params = {'ref': branch}
+        headers = {'Authorization': f"Bearer {st.secrets['GITHUB_TOKEN']}"}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code != 200:
+            print(
+                f"Failed to fetch repository contents. Status code: {response.status_code}")
+            return []
+
+        contents = response.json()
+        files_with_extensions = []
+
+        for content in contents:
+            if content['type'] == 'file' and os.path.splitext(content['name'])[1] in extensions:
+                print(content['name'])
+                files_with_extensions.append(content['download_url'])
+            elif content['type'] == 'dir':
+                files_with_extensions.extend(fetch_github_repo_contents(
+                    owner, repo, extensions, branch, content['path']))
+
+        return files_with_extensions
+    except:
+        print("Failed to fetch repository contents")
+        st.error("Failed to fetch some repository contents due to GitHub API rate limit. Please try again later in some time and use a smaller repository.")
         return []
-
-    contents = response.json()
-    files_with_extensions = []
-
-    for content in contents:
-        if content['type'] == 'file' and os.path.splitext(content['name'])[1] in extensions:
-            print(content['name'])
-            files_with_extensions.append(content['download_url'])
-        elif content['type'] == 'dir':
-            files_with_extensions.extend(fetch_github_repo_contents(owner, repo, extensions, branch, content['path']))
-
-    return files_with_extensions
 
 
 def get_text(owner, repo, extensions, branch):
     print(
         f"Fetching files with extensions {extensions} from {owner}/{repo}...")
-    files_to_read = fetch_github_repo_contents(owner, repo, extensions, branch, '')
+    files_to_read = fetch_github_repo_contents(
+        owner, repo, extensions, branch, '')
     print(files_to_read)
     all_text = ""
     if files_to_read:
         for file_url in files_to_read:
-            response = requests.get(file_url)
+            try:
+                print(f"Reading file from {file_url}...")
+                response = requests.get(file_url)
+                time.sleep(15)
+            except:
+                print(f"Failed to read file from {file_url}")
+                st.error(
+                    "Failed to read some files from GitHub API due to rate limit. Please try again later in some time and use a smaller repository.")
+                break
 
             if response.status_code == 200:
                 file_content = response.text
