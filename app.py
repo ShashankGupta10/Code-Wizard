@@ -3,7 +3,7 @@ import streamlit as st
 from langchain.llms.together import Together
 from langchain.vectorstores.faiss import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import CohereEmbeddings
+from langchain_community.embeddings import CohereEmbeddings
 from langchain.chains import RetrievalQA
 import os
 import time
