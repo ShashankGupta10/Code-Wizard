@@ -1,4 +1,5 @@
 langchain-community
+langchain
 streamlit
 faiss-cpu
 cohere
