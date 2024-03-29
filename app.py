@@ -1,4 +1,3 @@
-import requests
 import streamlit as st
 from langchain.llms.together import Together
 from langchain.vectorstores.faiss import FAISS
@@ -6,72 +5,63 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import CohereEmbeddings
 from langchain.chains import RetrievalQA
 import os
-import time
+import git
+
+def fetch_files_in_directory(directory, extensions, files_list):
+    for item in os.listdir(directory):
+        item_path = os.path.join(directory, item)
+        for i in extensions:
+            if os.path.isfile(item_path) and item.endswith(i):
+                files_list.append(item_path)
+            elif os.path.isdir(item_path):
+                fetch_files_in_directory(item_path, extensions, files_list)
 
 
-def fetch_github_repo_contents(owner, repo, extensions, branch, path=''):
+def fetch_github_repo_contents(link, extensions, dir_name):
     try:
-        url = f'https://api.github.com/repos/{owner}/{repo}/contents/{path}'
-        params = {'ref': branch}
-        headers = {'Authorization': f"Bearer {st.secrets['GITHUB_TOKEN']}"}
-        response = requests.get(url, headers=headers, params=params)
-        if response.status_code != 200:
-            print(
-                f"Failed to fetch repository contents. Status code: {response.status_code}")
-            return []
-
-        contents = response.json()
+        git.Repo.clone_from(link, dir_name)
+        print("Repo cloned successfully")
         files_with_extensions = []
-
-        for content in contents:
-            if content['type'] == 'file' and os.path.splitext(content['name'])[1] in extensions:
-                print(content['name'])
-                files_with_extensions.append(content['download_url'])
-            elif content['type'] == 'dir':
-                files_with_extensions.extend(fetch_github_repo_contents(
-                    owner, repo, extensions, branch, content['path']))
-
+        fetch_files_in_directory(
+            dir_name, extensions, files_with_extensions)
         return files_with_extensions
-    except:
-        print("Failed to fetch repository contents")
-        st.error("Failed to fetch some repository contents due to GitHub API rate limit. Please try again later in some time and use a smaller repository.")
-        return []
+    except git.GitError as e:
+        print("Error:", e)
+        st.error(
+            "Failed to access github repository. Please make sure the repo is public and accessible...")
 
 
-def get_text(owner, repo, extensions, branch):
-    print(
-        f"Fetching files with extensions {extensions} from {owner}/{repo}...")
-    files_to_read = fetch_github_repo_contents(
-        owner, repo, extensions, branch, '')
-    print(files_to_read)
+def get_text(link, extensions, dir_name):
+    if not os.path.exists(dir_name):
+        print(
+            f"Fetching files with extensions {extensions} from {link}...")
+        files_to_read = fetch_github_repo_contents(link, extensions, dir_name)
+        print(files_to_read)
+    else:
+        files_to_read = []
+        fetch_files_in_directory(dir_name, extensions, files_to_read)
+
     all_text = ""
     if files_to_read:
         for file_url in files_to_read:
             try:
                 print(f"Reading file from {file_url}...")
-                response = requests.get(file_url)
-                time.sleep(15)
-            except:
-                print(f"Failed to read file from {file_url}")
-                st.error(
-                    "Failed to read some files from GitHub API due to rate limit. Please try again later in some time and use a smaller repository.")
+                with open(file_url, 'r') as file:
+                    file_content = file.read()
+                    all_text += file_content
+                print(f"File content from {file_url} successfully read.")
+            except Exception as e:
+                print(f"Failed to read file from {file_url}. Error: {str(e)}")
                 break
-
-            if response.status_code == 200:
-                file_content = response.text
-                all_text += file_content
-
-            else:
-                print(
-                    f"Failed to read file from {file_url}. Status code: {response.status_code}")
         print(
             f"All files with extensions {extensions} have been saved to all_text")
+        print(all_text)
     return all_text
 
 
 def get_chunks(text):
     text_splitter = RecursiveCharacterTextSplitter(
-        separators=["\n", ";"],
+        separators=["\n\n"],
         length_function=len,
         chunk_size=1000
     )
@@ -80,18 +70,21 @@ def get_chunks(text):
 
 
 def get_vector_store(chunks):
-    vector_store = FAISS.from_texts(chunks, CohereEmbeddings(
-        cohere_api_key=st.secrets["COHERE_API_KEY"]))
-    return vector_store
+    if len(chunks) > 0:
+        vector_store = FAISS.from_texts(chunks, CohereEmbeddings(
+            cohere_api_key=st.secrets["COHERE_API_KEY"]))
+        return vector_store
+    st.info("No files found with the given extension.")
+    return ""
 
 
 def main():
     st.title("Code Wizard 🧙")
     st.subheader("Generate code according to your coding conventions")
-    st.info("You may get an API rate limit error if you use a large repository due to the Github API rate limit. Please try again later in some time and use a smaller repository.")
-    owner = st.text_input("GitHub Repo Owner")
-    repo = st.text_input("GitHub Repo Name")
-    branch = st.text_input("GitHub Repo Branch")
+    st.info("If your codebase is very extensive, please wait for some and let it go through all the files. It may take some time.")
+    link = st.text_input("GitHub Repo Link")
+    if link:
+        dir_name = link.split("/")[4]
     extensions = st.text_input(
         "File Extensions (seperated by comma ex: .py,.md,.js)").split(',')
     user_question = st.text_input(
@@ -119,17 +112,18 @@ def main():
                 top_k=1,
                 together_api_key=st.secrets["TOGETHER_API_KEY"]
             )
-            text = get_text(owner, repo, extensions, branch)
+            text = get_text(link, extensions, dir_name)
             chunks = get_chunks(text)
             vector_store = get_vector_store(chunks)
-            chain = RetrievalQA.from_chain_type(
-                llm=llm,
-                retriever=vector_store.as_retriever(),
-                verbose=True,
-                chain_type="stuff",
-            )
-            answer = chain.run(prompt)
-            st.markdown(answer)
+            if vector_store != "":
+                chain = RetrievalQA.from_chain_type(
+                    llm=llm,
+                    retriever=vector_store.as_retriever(),
+                    verbose=True,
+                    chain_type="stuff",
+                )
+                answer = chain.run(prompt)
+                st.markdown(answer)
 
 
 if __name__ == "__main__":
